@@ -1,65 +1,37 @@
-import { RunButton} from './Register'
-import { OpenEvent, DataMessageEvent, CloseEvent, ErrorEvent, ParamMessageEvent, ConnectMessageRecvEvent, ConnectMessageSendEvent} from './KeyEvent'
+// import {cs, button} from './Register'
 
-// namespace
-export namespace CommunicationService {
-  export let connectUrl: string
-  export let connectPort: number
-  export let showConnectInfoWindow: boolean
-  export function Connect(): void{
-    connect()
-  }
-  export function Button(): void{
-    clickButton()
-  }
-}
+// export const connect = () => {
+//   cs.ws.onopen = () => {
+//     for(let event of cs.events.eventsList.get('onopenevents').function.values()){
+//       event(cs.ws)
+//     }
+//   } 
 
-let openEvent = OpenEvent.get_instance()
-let dataMessageEvent = DataMessageEvent.get_instance()
-let closeEvent = CloseEvent.get_instance()
-let errorEvent = ErrorEvent.get_instance()
-let paramMessageEvent = ParamMessageEvent.get_instance()
-let connectMessageRecvEvent = ConnectMessageRecvEvent.get_instance()
-let connectMessageSendEvent = ConnectMessageSendEvent.get_instance()
+//   cs.ws.onmessage = (evt) => {
+//     for(let event of cs.events.eventsList.get('onmessageevents').function.values()){
+//       event(cs.ws, evt)
+//     }
+//   }
 
-let button = new RunButton()
+//   cs.ws.onclose = () => {
+//     for(let event of cs.events.eventsList.get('oncloseevents').function.values()){
+//       event(cs.ws)
+//     }
+//   }
 
-let execute_config: string | null
+//   cs.ws.onerror = () => {
+//     for(let event of cs.events.eventsList.get('onerrorevents').function.values()){
+//       event(cs.ws)
+//     }
+//   }
+// }
 
-let connectUrl = '127.0.0.1'
-let connectPort = '9876'
-let ws: WebSocket
-
-const connect = () => {
-  ws = new WebSocket('ws://' + connectUrl + ':' + connectPort)
-  
-  ws.onopen = () => {
-    openEvent.event(ws)
-    connectMessageSendEvent.event(ws)// packet.type === 'connection'
-  } 
-
-  ws.onmessage = (evt) => {
-    connectMessageRecvEvent.event(ws, evt)// received_msg.type === 'connection'
-    execute_config = paramMessageEvent.event(ws, evt)// received_msg.type === 'param'
-    dataMessageEvent.event(ws, evt)// received_msg.type === 'string'
-  }
-
-  ws.onclose = () => {
-    closeEvent.event()
-  }
-
-  ws.onerror = () => {
-    errorEvent.event()
-  }
-}
-
-const clickButton = () => {
-  if (execute_config === null){
-    console.error('"execute_config" is null')
-  }
-  else{
-    button.run(execute_config, "server0/executer")
-  }
-}
-
-connect() // 确保无论在何时重新加载网页都可以主动尝试连接
+// export const clickButton = () => {
+//   // 实际上应该传递前端选择的param_config。这里为了方便直接用后端传过来的param_config。
+//   if (cs.param_config === null){
+//     console.error('"execute_config" is null')
+//   }
+//   else{
+//     button.run(cs.param_config, "server0/executer")
+//   }
+// }

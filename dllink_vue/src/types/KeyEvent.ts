@@ -225,7 +225,11 @@ export class ConnectMessageSendEvent{
       }
     }
   
-    constructor(){}
+    constructor(){
+      // 定义一个基类Event，以下注册在Event
+      cs:CSManager.get_instance()
+      cs.registerEvent(this)
+    }
 
     event(ws: WebSocket){
         // 这个包即是hello包，又是 确认已连接 包
@@ -237,3 +241,4 @@ export class ConnectMessageSendEvent{
         }))
     }
 }
+
