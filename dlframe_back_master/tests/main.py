@@ -1,14 +1,10 @@
-"""
-  @project dlframe-back-master
-  @Package 
-  @author WeiJingqi
-  @date 2023/10/23 - 11:02
- """
+
 import ast
 import sys
-sys.path.append(r'D:\Aa-AAA机器学习实践教材\dllink\dlframe-back-master')
+sys.path.append(r"D:\Aa-AAA机器学习实践教材\‏dllink\dlframe_back_master")
 from tests.Decorator import DatasetDict, SplitDict, ModelDict, JudgeDict
 from tests.Rewrite_main import NodeManager, execute_all_nodes
+from asyncio.coroutines import iscoroutine
 
 from typing import Any, Dict
 import websockets
@@ -18,6 +14,7 @@ import time
 import json
 from dataclasses import dataclass
 import io
+import datetime
 
 
 #改变标准输出的默认编码
@@ -79,7 +76,6 @@ class MyServer:
         self.route_table = route_table
         self.addr_prefix = 'server' + addr_prefix
         self.links = {}
-        self.ackConnect = False
 
     def _server_thread_worker(self):
         print("< Server launching...")
@@ -109,9 +105,15 @@ class MyServer:
                 # router_chain
                 await self.router_chain(packet)
 
-            # unset link info
-            self.links.pop((remote_ip, str(remote_port)))
-            self.route_table.pop(packet.from_addr)
+            # # unset link info
+            # self.links.pop((remote_ip, str(remote_port)))
+            # self.route_table.pop(packet.from_addr)
+
+            # unset link info 3.26
+            self.links = {}
+            self.route_table = {}
+            # self.links.pop((remote_ip, str(remote_port)))
+            # self.route_table.pop(packet.from_addr)
 
         event_loop.run_until_complete(websockets.serve(onRecv, self.host, self.port))
         event_loop.run_forever()
@@ -151,7 +153,7 @@ class MyServer:
                 from_addr = self.addr_prefix,
                 to_addr = packet.from_addr,
                 type = "param",
-                data = params # 这里换成 -> send_params，不用.__str__()
+                data = selected_params_dict # 这里换成 -> send_params，不用.__str__()
             )
             addr = packet.to_addr
             to_ip = self.route_table.get(addr) # virtual address -> corresponding ip
@@ -172,7 +174,6 @@ class CSManager:
 
     def __init__(self, *args, **kwargs) -> None:
         self.server: MyServer = MyServer.get_instance(*args, **kwargs)
-        self.routetable = {}
         self.functions = {}
 
     @classmethod
@@ -191,7 +192,10 @@ class CSManager:
         addr = packet.to_addr
 
         if addr in self.functions: # if destination in local server
-            self.functions.get(addr)[0](packet.data)
+            if not iscoroutine(self.functions.get(addr)[0]): # 不是协程，不可await
+                self.functions.get(addr)[0](packet.data)
+            else: # 是协程，可await 
+                await self.functions.get(addr)[0](packet.data)
 
         else: # if destination in local client
             if self.server.has_link(addr):
@@ -222,7 +226,6 @@ class SimulateExecuter:
 
     def on_recv(self, config):
         execute_all_nodes(self.manager, config)
-        # file = open("new_file.txt", "w")
 
 class Send_to_client:
     sender: ModuleSender
@@ -272,6 +275,7 @@ if __name__ == '__main__':
     # 从前端获取已选择的参数（str
     test_str = "{'dataset': 'iris', 'data_split': 'ratio:0.8', 'model': {'name': 'svm', 'params': {'kernel': 'default'}}, 'judger': 'judge_clf'}"
     selected_params_dict = ast.literal_eval(test_str)   # 字符串转换为字典
+    # test_str = {'model': {'option': 'SVM','args': {'kernel': 'default'}},'dataset': {'option': 'Iris','args': {}},'data_split': {'option': 'TestSplitter','args': {'ratio': 0.8}},'judger': {'option': 'Judger_Rlf','args': {}}}
 
     # ===========================================================================
     # launch a server
@@ -284,6 +288,8 @@ if __name__ == '__main__':
     # register modules
     logger = SimulateLogger()
     executer = SimulateExecuter(manager)
+
+
     # ===========================================================================
 
     # execute_all_nodes(manager, selected_params_dict)    # 最终执行

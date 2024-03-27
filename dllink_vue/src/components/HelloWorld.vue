@@ -20,7 +20,7 @@
 
 <script setup lang="ts">
 
-import {RunButton, CSManager} from '../types/Register'
+import {RunButton, CSManager} from '../types/Client'
 
 const clickButton = () => {
   let button = new RunButton()
